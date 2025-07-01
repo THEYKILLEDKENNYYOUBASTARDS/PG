@@ -1,1 +1,62 @@
+import pygame
+import pygine as pg
 
+game = pg.Game(800, 600, "дудл джамп")
+
+physics = pg.PhysicsBody(gravity=1000.0)
+physics.set_bounce_factor(1) 
+
+ball_x = 300  # Начальная позиция X
+ball_y = 100  # Начальная позиция Y
+ball_radius = 48  # Размер мяча
+ball_color =(0, 0, 0)  # Красный цвет
+_position = (ball_x, ball_y)
+# Земля
+ground_level = 450  # Уровень земли
+
+player = pg.AnimatedSprite("./player.png", (96, 96), (ball_x, ball_y))
+player.add_animation("jump", [0, 1, 2, 3], fps=8, loop=True)
+
+# Функция обновления (вызывается каждый кадр)
+def update():
+    global ball_x, ball_y
+    
+    # Обновляем физику
+    dx, dy = physics.update(1/60)
+    ball_x += dx
+    ball_y += dy
+    
+    # Проверяем столкновение с землей
+    if ball_y + ball_radius > ground_level and ball_x + ball_radius > 250 and ball_x + ball_radius < 500:
+        ball_y = ground_level - ball_radius
+        physics.bounce((0, 1))  # Отскок от земли
+        physics.velocity[1] = -800
+
+    if pg.key_pressed(pygame.K_a):
+        ball_x -= 10
+
+    if pg.key_pressed(pygame.K_d):
+        ball_x += 10
+
+    player.x = ball_x
+    player.y = ball_y
+
+    
+def draw():
+    player.play_animation("jump")
+
+    player.update(1/60)
+
+    # Рисуем мяч
+    pygame.draw.circle(game.screen, ball_color, (int(ball_x), int(ball_y)), ball_radius)
+    
+    # Рисуем землю
+    pygame.draw.rect(game.screen, (101, 67, 33), (0, ground_level, 800, 100))
+    
+    # Показываем инструкцию
+    font = pygame.font.Font(None, 36)
+    text = font.render("ПРОБЕЛ: прыжок", True, (255, 255, 255))
+    game.screen.blit(text, (10, 10))
+    game.screen.blit(player.image, player.rect)
+
+game.run(update, draw)
